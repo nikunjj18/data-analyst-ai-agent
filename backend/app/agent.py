@@ -47,3 +47,46 @@ def generate_code(question: str, df: pd.DataFrame, quality_report=None) -> str:
     code = response.text.strip()
     code = code.replace("```python", "").replace("```", "").strip()
     return code
+def generate_code_with_retry(question: str, df: pd.DataFrame, quality_report=None, max_attempts: int = 3):
+    """
+    Generates code, executes it, and if it fails, feeds the error back to
+    the model to self-correct. Retries up to max_attempts times.
+    Returns (result, final_code, attempt_history).
+    """
+    from app.executor import safe_execute, ExecutionError
+
+    prompt = build_prompt(question, df, quality_report)
+    attempt_history = []
+
+    for attempt in range(1, max_attempts + 1):
+        response = client.models.generate_content(
+            model="gemini-flash-lite-latest",
+            contents=prompt
+        )
+        code = response.text.strip().replace("```python", "").replace("```", "").strip()
+
+        try:
+            result = safe_execute(code, df)
+            attempt_history.append({"attempt": attempt, "code": code, "status": "success"})
+            return result, code, attempt_history
+        except ExecutionError as e:
+            attempt_history.append({"attempt": attempt, "code": code, "status": "failed", "error": str(e)})
+
+            if attempt == max_attempts:
+                raise ExecutionError(
+                    f"Failed after {max_attempts} attempts. Last error: {e}"
+                )
+
+            # Feed the error back so the model can fix itself
+            prompt = f"""{prompt}
+
+Your previous attempt produced this code:
+{code}
+
+It failed with this error:
+{e}
+
+Fix the code so it runs correctly. Return ONLY the corrected executable Python code, no explanations, no markdown fences.
+"""
+
+    raise ExecutionError("Unexpected: retry loop exited without result.")
