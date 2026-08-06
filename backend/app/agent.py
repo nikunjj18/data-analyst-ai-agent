@@ -1,7 +1,7 @@
 import pandas as pd
 from google import genai
 from app.config import config
-
+from app.api_utils import call_with_retry
 client = genai.Client(api_key=config.GEMINI_API_KEY)
 
 
@@ -40,10 +40,10 @@ Rules:
 
 def generate_code(question: str, df: pd.DataFrame, quality_report=None) -> str:
     prompt = build_prompt(question, df, quality_report)
-    response = client.models.generate_content(
+    response = call_with_retry(lambda: client.models.generate_content(
         model="gemini-flash-lite-latest",
         contents=prompt
-    )
+    ))
     code = response.text.strip()
     code = code.replace("```python", "").replace("```", "").strip()
     return code
@@ -59,10 +59,10 @@ def generate_code_with_retry(question: str, df: pd.DataFrame, quality_report=Non
     attempt_history = []
 
     for attempt in range(1, max_attempts + 1):
-        response = client.models.generate_content(
-            model="gemini-flash-lite-latest",
-            contents=prompt
-        )
+        response = call_with_retry(lambda: client.models.generate_content(
+        model="gemini-flash-lite-latest",
+        contents=prompt
+    ))
         code = response.text.strip().replace("```python", "").replace("```", "").strip()
 
         try:
