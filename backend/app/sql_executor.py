@@ -1,6 +1,7 @@
 import sqlite3
 import pandas as pd
 import re
+import threading
 
 
 class SQLExecutionError(Exception):
@@ -35,3 +36,27 @@ def safe_execute_sql(sql: str, db_path: str, timeout: float = 5.0) -> pd.DataFra
         return result
     except Exception as e:
         raise SQLExecutionError(f"{type(e).__name__}: {e}")
+
+   
+def safe_execute_sql_with_timeout(sql: str, db_path: str, timeout_seconds: float = 10.0) -> pd.DataFrame:
+    """Runs safe_execute_sql in a background thread with a timeout."""
+    result_container = {}
+    error_container = {}
+
+    def target():
+        try:
+            result_container["result"] = safe_execute_sql(sql, db_path)
+        except Exception as e:
+            error_container["error"] = e
+
+    thread = threading.Thread(target=target, daemon=True)
+    thread.start()
+    thread.join(timeout=timeout_seconds)
+
+    if thread.is_alive():
+        raise SQLExecutionError(f"SQL execution timed out after {timeout_seconds} seconds.")
+
+    if "error" in error_container:
+        raise error_container["error"]
+
+    return result_container["result"]

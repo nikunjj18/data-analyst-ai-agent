@@ -2,6 +2,8 @@ import pandas as pd
 from google import genai
 from app.config import config
 from app.api_utils import call_with_retry
+from app.executor import safe_execute_with_timeout
+from app.logger import log_event, log_error
 
 client = genai.Client(api_key=config.GEMINI_API_KEY)
 
@@ -67,7 +69,9 @@ def generate_code(question: str, df: pd.DataFrame, quality_report=None, memory=N
 
 
 def generate_code_with_retry(question: str, df: pd.DataFrame, quality_report=None, memory=None, max_attempts: int = 3):
-    from app.executor import safe_execute, ExecutionError
+    from app.executor import safe_execute_with_timeout, ExecutionError
+
+    log_event("question_received", question=question, pipeline="pandas")
 
     prompt = build_prompt(question, df, quality_report, memory)
     attempt_history = []
@@ -78,15 +82,21 @@ def generate_code_with_retry(question: str, df: pd.DataFrame, quality_report=Non
             contents=prompt
         ))
         code = response.text.strip().replace("```python", "").replace("```", "").strip()
+        log_event("code_generated", question=question, attempt=attempt, code=code)
 
         try:
-            result = safe_execute(code, df)
+            result = safe_execute_with_timeout(code, df, timeout_seconds=10.0)
             attempt_history.append({"attempt": attempt, "code": code, "status": "success"})
+            log_event("execution_success", question=question, attempt=attempt)
             return result, code, attempt_history
         except ExecutionError as e:
             attempt_history.append({"attempt": attempt, "code": code, "status": "failed", "error": str(e)})
+            log_error("execution_failed", e, question=question, attempt=attempt, code=code)
+
             if attempt == max_attempts:
+                log_error("all_attempts_exhausted", e, question=question)
                 raise ExecutionError(f"Failed after {max_attempts} attempts. Last error: {e}")
+
             prompt = f"""{prompt}
 
 Your previous attempt produced this code:
@@ -99,3 +109,28 @@ Fix the code so it runs correctly. Return ONLY the corrected executable Python c
 """
 
     raise ExecutionError("Unexpected: retry loop exited without result.")
+
+def ask_question_safely(question: str, df, quality_report=None, memory=None):
+    """
+    Top-level entry point: runs the full pipeline and converts any unexpected
+    exception into a safe, user-facing AgentError. Full detail is always logged.
+    """
+    from app.errors import AnalysisError
+    from app.logger import log_error
+
+    try:
+        result, code, history = generate_code_with_retry(question, df, quality_report, memory)
+        return result, code, history
+    except ExecutionError as e:
+        # Expected failure type — already logged inside generate_code_with_retry
+        raise AnalysisError(
+            user_message="I wasn't able to answer that question. Try rephrasing it, or ask something more specific about your data.",
+            internal_detail=str(e)
+        )
+    except Exception as e:
+        # Truly unexpected — log full detail, never show it to the user
+        log_error("unexpected_error", e, question=question)
+        raise AnalysisError(
+            user_message="Something went wrong while processing your question. Please try again.",
+            internal_detail=f"{type(e).__name__}: {e}"
+        )

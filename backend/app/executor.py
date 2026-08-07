@@ -40,3 +40,31 @@ def safe_execute(code: str, df: pd.DataFrame):
         raise ExecutionError("Generated code did not set a `result` variable.")
 
     return local_vars["result"]
+import threading
+
+
+def safe_execute_with_timeout(code: str, df: pd.DataFrame, timeout_seconds: float = 10.0):
+    """
+    Runs safe_execute in a background thread with a timeout.
+    If execution takes too long, raises ExecutionError instead of hanging forever.
+    """
+    result_container = {}
+    error_container = {}
+
+    def target():
+        try:
+            result_container["result"] = safe_execute(code, df)
+        except Exception as e:
+            error_container["error"] = e
+
+    thread = threading.Thread(target=target, daemon=True)
+    thread.start()
+    thread.join(timeout=timeout_seconds)
+
+    if thread.is_alive():
+        raise ExecutionError(f"Execution timed out after {timeout_seconds} seconds.")
+
+    if "error" in error_container:
+        raise error_container["error"]
+
+    return result_container["result"]

@@ -1,7 +1,8 @@
 from google import genai
 from app.config import config
 from app.api_utils import call_with_retry
-from app.sql_executor import safe_execute_sql, SQLExecutionError
+from app.sql_executor import SQLExecutionError, safe_execute_sql_with_timeout
+from app.logger import log_event, log_error
 
 client = genai.Client(api_key=config.GEMINI_API_KEY)
 
@@ -34,6 +35,9 @@ Rules:
 
 def generate_sql_with_retry(question: str, relevant_tables: list[dict], db_path: str, memory=None, max_attempts: int = 3):
     """Generates SQL, executes it, self-corrects on failure. Returns (result_df, final_sql, history)."""
+
+    log_event("question_received", question=question, pipeline="sql")
+
     prompt = build_sql_prompt(question, relevant_tables, memory)
     attempt_history = []
 
@@ -43,15 +47,21 @@ def generate_sql_with_retry(question: str, relevant_tables: list[dict], db_path:
             contents=prompt
         ))
         sql = response.text.strip().replace("```sql", "").replace("```", "").strip()
+        log_event("sql_generated", question=question, attempt=attempt, sql=sql)
 
         try:
-            result_df = safe_execute_sql(sql, db_path)
+            result_df = safe_execute_sql_with_timeout(sql, db_path, timeout_seconds=10.0)
             attempt_history.append({"attempt": attempt, "sql": sql, "status": "success"})
+            log_event("execution_success", question=question, attempt=attempt, pipeline="sql")
             return result_df, sql, attempt_history
         except SQLExecutionError as e:
             attempt_history.append({"attempt": attempt, "sql": sql, "status": "failed", "error": str(e)})
+            log_error("execution_failed", e, question=question, attempt=attempt, sql=sql, pipeline="sql")
+
             if attempt == max_attempts:
+                log_error("all_attempts_exhausted", e, question=question, pipeline="sql")
                 raise SQLExecutionError(f"Failed after {max_attempts} attempts. Last error: {e}")
+
             prompt = f"""{prompt}
 
 Your previous attempt produced this SQL:
