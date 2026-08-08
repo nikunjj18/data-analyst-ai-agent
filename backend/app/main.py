@@ -10,8 +10,16 @@ from app.agent import ask_question_safely
 from app.errors import AgentError
 from app.memory import ConversationMemory
 from app.visualizer import render_chart
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Data Analyst AI Agent", version="1.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "https://your-app.vercel.app"],  # update the Vercel URL once deployed
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Simple in-memory session state (single-user demo scope — see README limitations)
 session = {

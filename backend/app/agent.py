@@ -114,10 +114,10 @@ def ask_question_safely(question: str, df, quality_report=None, memory=None):
     from app.errors import AnalysisError
     from app.logger import log_error, log_event
 
-    if not is_data_question(question):
+    if not is_data_question(question, df):
         log_event("non_data_question", question=question)
         response_text = handle_non_data_question(question)
-        return response_text, None, []  # no code, no chart needed
+        return response_text, None, []
 
     try:
         result, code, history = generate_code_with_retry(question, df, quality_report, memory)
@@ -134,13 +134,19 @@ def ask_question_safely(question: str, df, quality_report=None, memory=None):
             internal_detail=f"{type(e).__name__}: {e}"
         )
 
-def is_data_question(question: str) -> bool:
+def is_data_question(question: str, df: pd.DataFrame = None) -> bool:
     """Quick check: is this actually answerable from the dataset, or just conversation?"""
+    columns_context = ""
+    if df is not None:
+        columns_context = f"\nThe dataset has these columns: {list(df.columns)}"
+
     prompt = f"""Is the following question something that could be answered by analyzing a dataset
 (e.g. asking for a calculation, aggregation, filter, trend, or comparison involving the data)?
+{columns_context}
 
 Question: "{question}"
 
+If the question mentions or relates to any of the columns listed above, even briefly or informally, answer YES.
 Answer with only one word: YES or NO.
 """
     response = call_with_retry(lambda: client.models.generate_content(
