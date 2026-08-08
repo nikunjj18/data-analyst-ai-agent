@@ -85,12 +85,12 @@ def auto_clean(csv_path: str):
         df = df.drop(columns=report.empty_columns)
 
     # Strip whitespace, normalize null tokens
-    for col in df.select_dtypes(include="object").columns:
+    for col in df.select_dtypes(include=["object","str"]).columns:
         df[col] = df[col].astype(str).str.strip()
         df[col] = df[col].replace({"nan": np.nan, "None": np.nan, "N/A": np.nan, "": np.nan})
 
     # Coerce numeric-looking columns (>70% convertible)
-    for col in df.select_dtypes(include="object").columns:
+    for col in df.select_dtypes(include=["object","str"]).columns:
         coerced = pd.to_numeric(df[col], errors="coerce")
         non_null_original = df[col].notna().sum()
         non_null_coerced = coerced.notna().sum()
@@ -103,7 +103,7 @@ def auto_clean(csv_path: str):
             df[col] = coerced
 
     # Normalize casing variants
-    for col in df.select_dtypes(include="object").columns:
+    for col in df.select_dtypes(include=["object","str"]).columns:
         non_null = df[col].dropna()
         if non_null.empty:
             continue

@@ -57,5 +57,86 @@
     "expected_type": "number",
     "expected_value": 16,
     "tolerance": 0
+  },
+  {
+    "id": "eval_009",
+    "question": "How many orders had a discount percentage greater than 15?",
+    "expected_type": "number",
+    "expected_value": 419,
+    "tolerance": 0
+  },
+  {
+    "id": "eval_010",
+    "question": "What is the average net revenue per order?",
+    "expected_type": "number",
+    "expected_value": 433.34,
+    "tolerance": 0.5
+  },
+  {
+    "id": "eval_011",
+    "question": "Which customer segment generated the highest total net revenue?",
+    "expected_type": "string",
+    "expected_value": "Online"
+  },
+  {
+    "id": "eval_012",
+    "question": "How many orders were placed in the North region?",
+    "expected_type": "number",
+    "expected_value": 586,
+    "tolerance": 0
+  },
+  {
+    "id": "eval_013",
+    "question": "What is the maximum unit price across all orders?",
+    "expected_type": "number",
+    "expected_value": 402.12,
+    "tolerance": 0.5
+  },
+  {
+    "id": "eval_014",
+    "question": "What is the minimum quantity ordered in a single order?",
+    "expected_type": "number",
+    "expected_value": 1,
+    "tolerance": 0
+  },
+  {
+    "id": "eval_015",
+    "question": "What is the total gross revenue (before discount) across all orders?",
+    "expected_type": "number",
+    "expected_value": 1394959.39,
+    "tolerance": 1.0
+  },
+  {
+    "id": "eval_016",
+    "question": "Which category has the lowest average discount percentage?",
+    "expected_type": "string",
+    "expected_value": "Accessories"
+  },
+  {
+    "id": "eval_017",
+    "question": "How many orders had zero discount applied?",
+    "expected_type": "number",
+    "expected_value": 1288,
+    "tolerance": 0
+  },
+  {
+    "id": "eval_018",
+    "question": "What was the total net revenue in the first quarter of 2024 (January to March)?",
+    "expected_type": "number",
+    "expected_value": 346415.57,
+    "tolerance": 5.0
+  },
+  {
+    "id": "eval_019",
+    "question": "Which month in 2024 had the highest total net revenue?",
+    "expected_type": "string",
+    "expected_value": "2024-01"
+  },
+  {
+    "id": "eval_020",
+    "question": "How many unique regions are there?",
+    "expected_type": "number",
+    "expected_value": 5,
+    "tolerance": 0
   }
 ]
