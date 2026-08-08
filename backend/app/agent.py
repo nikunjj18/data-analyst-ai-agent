@@ -111,26 +111,57 @@ Fix the code so it runs correctly. Return ONLY the corrected executable Python c
     raise ExecutionError("Unexpected: retry loop exited without result.")
 
 def ask_question_safely(question: str, df, quality_report=None, memory=None):
-    """
-    Top-level entry point: runs the full pipeline and converts any unexpected
-    exception into a safe, user-facing AgentError. Full detail is always logged.
-    """
     from app.errors import AnalysisError
-    from app.logger import log_error
+    from app.logger import log_error, log_event
+
+    if not is_data_question(question):
+        log_event("non_data_question", question=question)
+        response_text = handle_non_data_question(question)
+        return response_text, None, []  # no code, no chart needed
 
     try:
         result, code, history = generate_code_with_retry(question, df, quality_report, memory)
         return result, code, history
     except ExecutionError as e:
-        # Expected failure type — already logged inside generate_code_with_retry
         raise AnalysisError(
             user_message="I wasn't able to answer that question. Try rephrasing it, or ask something more specific about your data.",
             internal_detail=str(e)
         )
     except Exception as e:
-        # Truly unexpected — log full detail, never show it to the user
         log_error("unexpected_error", e, question=question)
         raise AnalysisError(
             user_message="Something went wrong while processing your question. Please try again.",
             internal_detail=f"{type(e).__name__}: {e}"
         )
+
+def is_data_question(question: str) -> bool:
+    """Quick check: is this actually answerable from the dataset, or just conversation?"""
+    prompt = f"""Is the following question something that could be answered by analyzing a dataset
+(e.g. asking for a calculation, aggregation, filter, trend, or comparison involving the data)?
+
+Question: "{question}"
+
+Answer with only one word: YES or NO.
+"""
+    response = call_with_retry(lambda: client.models.generate_content(
+        model="gemini-flash-lite-latest",
+        contents=prompt
+    ))
+    answer = response.text.strip().upper()
+    return answer.startswith("YES")
+
+
+def handle_non_data_question(question: str) -> str:
+    """Responds conversationally to non-data questions instead of forcing code generation."""
+    prompt = f"""You are a helpful data analyst assistant. The user asked something that isn't
+a data analysis question: "{question}"
+
+Respond briefly and naturally (1-2 sentences). If it's a greeting, greet them back and mention
+you're here to help analyze their data. If it's something you genuinely can't know (like today's
+date, or general knowledge), say so honestly and redirect them toward asking about their dataset.
+"""
+    response = call_with_retry(lambda: client.models.generate_content(
+        model="gemini-flash-lite-latest",
+        contents=prompt
+    ))
+    return response.text.strip()
