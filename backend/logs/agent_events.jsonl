@@ -13,3 +13,28 @@
 {"timestamp": "2026-08-07T15:41:05.341505+00:00", "event_type": "question_received", "question": "Now show that by region instead.", "pipeline": "pandas"}
 {"timestamp": "2026-08-07T15:41:06.500118+00:00", "event_type": "code_generated", "question": "Now show that by region instead.", "attempt": 1, "code": "df_clean = df.dropna(subset=['quantity', 'unit_price', 'discount_pct', 'category', 'region'])\ndf_clean['revenue'] = df_clean['quantity'] * df_clean['unit_price'] * (1 - df_clean['discount_pct'] / 100)\nresult = df_clean.groupby(['category', 'region'])['revenue'].sum()"}
 {"timestamp": "2026-08-07T15:41:06.513393+00:00", "event_type": "execution_success", "question": "Now show that by region instead.", "attempt": 1}
+{"timestamp": "2026-08-08T05:56:04.706556+00:00", "event_type": "question_received", "question": "What is the total net revenue across all orders?", "pipeline": "pandas"}
+{"timestamp": "2026-08-08T05:57:47.202585+00:00", "event_type": "question_received", "question": "What is the total net revenue across all orders?", "pipeline": "pandas"}
+{"timestamp": "2026-08-08T05:57:48.677859+00:00", "event_type": "code_generated", "question": "What is the total net revenue across all orders?", "attempt": 1, "code": "result = df['net_revenue'].dropna().sum()"}
+{"timestamp": "2026-08-08T05:57:48.679748+00:00", "event_type": "execution_success", "question": "What is the total net revenue across all orders?", "attempt": 1}
+{"timestamp": "2026-08-08T05:57:48.680518+00:00", "event_type": "question_received", "question": "What is the total net revenue by category?", "pipeline": "pandas"}
+{"timestamp": "2026-08-08T05:57:49.549352+00:00", "event_type": "code_generated", "question": "What is the total net revenue by category?", "attempt": 1, "code": "result = df.dropna(subset=['category', 'net_revenue']).groupby('category')['net_revenue'].sum()"}
+{"timestamp": "2026-08-08T05:57:49.558158+00:00", "event_type": "execution_success", "question": "What is the total net revenue by category?", "attempt": 1}
+{"timestamp": "2026-08-08T05:57:49.559278+00:00", "event_type": "question_received", "question": "Which product had the highest total quantity sold?", "pipeline": "pandas"}
+{"timestamp": "2026-08-08T05:57:50.495708+00:00", "event_type": "code_generated", "question": "Which product had the highest total quantity sold?", "attempt": 1, "code": "result = df[['product', 'quantity']].dropna(subset=['product', 'quantity']).groupby('product')['quantity'].sum().idxmax()"}
+{"timestamp": "2026-08-08T05:57:50.509886+00:00", "event_type": "execution_success", "question": "Which product had the highest total quantity sold?", "attempt": 1}
+{"timestamp": "2026-08-08T05:57:50.510773+00:00", "event_type": "question_received", "question": "How many total orders are there?", "pipeline": "pandas"}
+{"timestamp": "2026-08-08T05:57:51.276156+00:00", "event_type": "code_generated", "question": "How many total orders are there?", "attempt": 1, "code": "result = df['order_id'].dropna().nunique()"}
+{"timestamp": "2026-08-08T05:57:51.286874+00:00", "event_type": "execution_success", "question": "How many total orders are there?", "attempt": 1}
+{"timestamp": "2026-08-08T05:57:51.287896+00:00", "event_type": "question_received", "question": "What is the average discount percentage across all orders?", "pipeline": "pandas"}
+{"timestamp": "2026-08-08T05:57:52.231517+00:00", "event_type": "code_generated", "question": "What is the average discount percentage across all orders?", "attempt": 1, "code": "discount_clean = pd.to_numeric(df['discount_pct'], errors='coerce').dropna()\nresult = discount_clean.mean()"}
+{"timestamp": "2026-08-08T05:57:52.233262+00:00", "event_type": "execution_success", "question": "What is the average discount percentage across all orders?", "attempt": 1}
+{"timestamp": "2026-08-08T05:57:52.234206+00:00", "event_type": "question_received", "question": "Which region had the highest total net revenue?", "pipeline": "pandas"}
+{"timestamp": "2026-08-08T05:57:53.351809+00:00", "event_type": "code_generated", "question": "Which region had the highest total net revenue?", "attempt": 1, "code": "region_revenue = df[['region', 'net_revenue']].dropna()\nregion_revenue['net_revenue'] = pd.to_numeric(region_revenue['net_revenue'], errors='coerce')\nregion_revenue = region_revenue.dropna()\n\ntotal_by_region = region_revenue.groupby('region')['net_revenue'].sum()\nresult = total_by_region.idxmax()"}
+{"timestamp": "2026-08-08T05:57:53.355586+00:00", "event_type": "execution_success", "question": "Which region had the highest total net revenue?", "attempt": 1}
+{"timestamp": "2026-08-08T05:57:53.356435+00:00", "event_type": "question_received", "question": "What is the total quantity sold across all orders?", "pipeline": "pandas"}
+{"timestamp": "2026-08-08T05:57:54.080496+00:00", "event_type": "code_generated", "question": "What is the total quantity sold across all orders?", "attempt": 1, "code": "result = df['quantity'].dropna().sum()"}
+{"timestamp": "2026-08-08T05:57:54.082043+00:00", "event_type": "execution_success", "question": "What is the total quantity sold across all orders?", "attempt": 1}
+{"timestamp": "2026-08-08T05:57:54.082966+00:00", "event_type": "question_received", "question": "How many unique products are there?", "pipeline": "pandas"}
+{"timestamp": "2026-08-08T05:57:55.112271+00:00", "event_type": "code_generated", "question": "How many unique products are there?", "attempt": 1, "code": "result = df['product'].dropna().nunique()"}
+{"timestamp": "2026-08-08T05:57:55.114403+00:00", "event_type": "execution_success", "question": "How many unique products are there?", "attempt": 1}

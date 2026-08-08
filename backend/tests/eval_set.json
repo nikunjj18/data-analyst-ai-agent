@@ -1,0 +1,61 @@
+[
+  {
+    "id": "eval_001",
+    "question": "What is the total net revenue across all orders?",
+    "expected_type": "number",
+    "expected_value": 1300014.99,
+    "tolerance": 1.0
+  },
+  {
+    "id": "eval_002",
+    "question": "What is the total net revenue by category?",
+    "expected_type": "series",
+    "expected_value": {
+      "Accessories": 115824.66,
+      "Electronics": 277432.75,
+      "Furniture": 811058.72,
+      "Stationery": 95698.86
+    },
+    "tolerance": 1.0
+  },
+  {
+    "id": "eval_003",
+    "question": "Which product had the highest total quantity sold?",
+    "expected_type": "string",
+    "expected_value": "USB-C Hub"
+  },
+  {
+    "id": "eval_004",
+    "question": "How many total orders are there?",
+    "expected_type": "number",
+    "expected_value": 3000,
+    "tolerance": 0
+  },
+  {
+    "id": "eval_005",
+    "question": "What is the average discount percentage across all orders?",
+    "expected_type": "number",
+    "expected_value": 7.09,
+    "tolerance": 0.1
+  },
+  {
+    "id": "eval_006",
+    "question": "Which region had the highest total net revenue?",
+    "expected_type": "string",
+    "expected_value": "North"
+  },
+  {
+    "id": "eval_007",
+    "question": "What is the total quantity sold across all orders?",
+    "expected_type": "number",
+    "expected_value": 19714,
+    "tolerance": 0
+  },
+  {
+    "id": "eval_008",
+    "question": "How many unique products are there?",
+    "expected_type": "number",
+    "expected_value": 16,
+    "tolerance": 0
+  }
+]
