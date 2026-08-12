@@ -171,3 +171,75 @@ date, or general knowledge), say so honestly and redirect them toward asking abo
         contents=prompt
     ))
     return response.text.strip()
+
+def generate_explanation(question: str, result, code: str) -> str:
+    """Generates a short natural-language explanation of why the result is what it is."""
+    prompt = f"""A data analyst asked: "{question}"
+
+The answer computed was: {str(result)[:400]}
+
+The code used to compute it:
+{code}
+
+In 1-2 short sentences, explain what's driving this result in plain language — what pattern,
+concentration, or factor in the data explains it. Be specific and analytical, not generic.
+Do not repeat the question or the number itself, just explain the "why."
+"""
+    response = call_with_retry(lambda: client.models.generate_content(
+        model="gemini-flash-lite-latest",
+        contents=prompt
+    ))
+    return response.text.strip()
+
+def generate_dataset_insights(df: pd.DataFrame, quality_report=None) -> str:
+    """Generates an executive-summary style narrative about the dataset for the export report."""
+    columns_info = "\n".join([f"- {col} ({df[col].dtype})" for col in df.columns])
+    sample = df.head(5).to_string()
+    quality_text = quality_report.to_prompt_text() if quality_report else "No issues detected."
+
+    prompt = f"""You are a senior data analyst writing an executive summary for a stakeholder report.
+
+Dataset columns:
+{columns_info}
+
+Data quality notes:
+{quality_text}
+
+Sample rows:
+{sample}
+
+Write a 4-6 sentence executive summary covering: what this dataset represents, any notable
+patterns or concentrations worth investigating further, and data quality caveats a reader should
+know about. Write in flowing prose, no bullet points, professional and specific, not generic.
+"""
+    response = call_with_retry(lambda: client.models.generate_content(
+        model="gemini-flash-lite-latest",
+        contents=prompt
+    ))
+    return response.text.strip()
+
+def generate_key_insights(df: pd.DataFrame, quality_report=None) -> list:
+    columns_info = "\n".join([f"- {col} ({df[col].dtype})" for col in df.columns])
+    sample = df.head(5).to_string()
+    prompt = f"""You are a senior data analyst. Look at this dataset:
+
+Columns:
+{columns_info}
+
+Sample rows:
+{sample}
+
+Generate exactly 3 short, specific, analytical insights a viewer would find valuable at a glance.
+Be specific with column names and plausible patterns, not generic statements.
+Return ONLY a JSON array of 3 strings, nothing else.
+"""
+    response = call_with_retry(lambda: client.models.generate_content(
+        model="gemini-flash-lite-latest",
+        contents=prompt
+    ))
+    text = response.text.strip().replace("```json", "").replace("```", "").strip()
+    try:
+        import json
+        return json.loads(text)
+    except Exception:
+        return []

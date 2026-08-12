@@ -8,8 +8,8 @@ class DataQualityReport:
     def __init__(self):
         self.unlabeled_columns = []
         self.empty_columns = []
-        self.null_summary = {}          # col -> {count, pct}
-        self.mixed_type_columns = {}    # col -> {bad_count, examples}
+        self.null_summary = {}
+        self.mixed_type_columns = {}
         self.duplicate_row_count = 0
         self.categorical_normalizations = {}
         self.total_rows = 0
@@ -27,24 +27,60 @@ class DataQualityReport:
             for col, mapping in self.categorical_normalizations.items():
                 merged = ", ".join(f"'{k}'->'{v}'" for k, v in mapping.items())
                 lines.append(f"- '{col}': normalized casing ({merged})")
+        if self.duplicate_row_count > 0:
+            lines.append(f"- {self.duplicate_row_count} duplicate rows detected (not removed automatically)")
+        if self.null_summary:
+            null_lines = [
+                f"  - {col}: {info['count']} nulls ({info['pct']}%)"
+                for col, info in self.null_summary.items() if info["count"] > 0
+            ]
+            if null_lines:
+                lines.append("- Missing values:\n" + "\n".join(null_lines))
         if not lines:
             return "No automatic cleaning issues detected."
         return "\n".join(lines)
 
 
 class PendingDecision:
-    """Represents one open question that needs a user's choice."""
+    """Represents one open question that needs a user's (or AI's) choice."""
 
     def __init__(self, issue_id, column, description, options):
-        self.issue_id = issue_id          # e.g. "null_unit_price"
-        self.column = column              # e.g. "unit_price" (or None for row-level issues)
+        self.issue_id = issue_id
+        self.column = column
         self.description = description
-        self.options = options            # dict: {"a": ("Drop rows", "drop_rows"), ...}
+        self.options = options
+        self.recommended = None
 
-    def display(self):
-        print(f"\n{self.description}")
-        for key, (label, _) in self.options.items():
-            print(f"  [{key}] {label}")
+
+def recommend_decision(issue: PendingDecision, df: pd.DataFrame) -> str:
+    """Picks a sensible default strategy for a data quality issue, without asking the user."""
+    if issue.issue_id == "duplicates":
+        return "a" if "a" in issue.options else list(issue.options.keys())[0]
+
+    col = issue.column
+    if col is None or col not in df.columns:
+        return list(issue.options.keys())[-1]
+
+    null_pct = df[col].isnull().mean() * 100
+
+    if null_pct > 50:
+        return "b" if "b" in issue.options else list(issue.options.keys())[0]
+
+    is_numeric = pd.api.types.is_numeric_dtype(df[col])
+    if is_numeric:
+        try:
+            skew = df[col].skew() if df[col].notna().sum() > 2 else 0
+        except Exception:
+            skew = 0
+        if abs(skew) > 1 and "d" in issue.options:
+            return "d"
+        elif "c" in issue.options:
+            return "c"
+    else:
+        if "c" in issue.options:
+            return "c"
+
+    return "b" if "b" in issue.options else list(issue.options.keys())[0]
 
 
 def auto_clean(csv_path: str):
@@ -55,14 +91,17 @@ def auto_clean(csv_path: str):
     report = DataQualityReport()
 
     try:
-        df = pd.read_csv(csv_path)
+        if csv_path.lower().endswith((".xlsx", ".xls")):
+            df = pd.read_excel(csv_path)
+        else:
+            df = pd.read_csv(csv_path)
     except pd.errors.EmptyDataError:
-        raise ValueError("CSV file is empty or has no columns.")
+        raise ValueError("File is empty or has no columns.")
     except Exception as e:
-        raise ValueError(f"Failed to read CSV: {e}")
+        raise ValueError(f"Failed to read file: {e}")
 
     if df.shape[0] == 0:
-        raise ValueError("CSV has headers but no data rows.")
+        raise ValueError("File has headers but no data rows.")
 
     report.total_rows = len(df)
 
@@ -85,12 +124,12 @@ def auto_clean(csv_path: str):
         df = df.drop(columns=report.empty_columns)
 
     # Strip whitespace, normalize null tokens
-    for col in df.select_dtypes(include=["object","str"]).columns:
+    for col in df.select_dtypes(include="object").columns:
         df[col] = df[col].astype(str).str.strip()
         df[col] = df[col].replace({"nan": np.nan, "None": np.nan, "N/A": np.nan, "": np.nan})
 
     # Coerce numeric-looking columns (>70% convertible)
-    for col in df.select_dtypes(include=["object","str"]).columns:
+    for col in df.select_dtypes(include="object").columns:
         coerced = pd.to_numeric(df[col], errors="coerce")
         non_null_original = df[col].notna().sum()
         non_null_coerced = coerced.notna().sum()
@@ -103,7 +142,7 @@ def auto_clean(csv_path: str):
             df[col] = coerced
 
     # Normalize casing variants
-    for col in df.select_dtypes(include=["object","str"]).columns:
+    for col in df.select_dtypes(include="object").columns:
         non_null = df[col].dropna()
         if non_null.empty:
             continue
@@ -123,7 +162,7 @@ def auto_clean(csv_path: str):
                 df[col] = df[col].replace(replace_map)
                 report.categorical_normalizations[col] = replace_map
 
-    # ---- Build null summary (used to generate pending decisions) ----
+    # Null summary
     for col in df.columns:
         null_count = int(df[col].isnull().sum())
         report.null_summary[col] = {
@@ -133,7 +172,7 @@ def auto_clean(csv_path: str):
 
     report.duplicate_row_count = int(df.duplicated().sum())
 
-    # ---- STAGE 2 setup: build list of decisions needed ----
+    # Build pending decisions
     pending = []
 
     for col, info in report.null_summary.items():
@@ -168,16 +207,16 @@ def auto_clean(csv_path: str):
             }
         ))
 
+    for issue in pending:
+        issue.recommended = recommend_decision(issue, df)
+
     return df, report, pending
 
 
 def apply_user_decisions(df: pd.DataFrame, pending: list, decisions: dict) -> pd.DataFrame:
-    """
-    STAGE 3: Applies the user's chosen strategy for each pending decision.
-    `decisions` = {issue_id: chosen_option_key}, e.g. {"null_unit_price": "c"}
-    """
+    """STAGE 3: Applies the chosen strategy for each pending decision."""
     for issue in pending:
-        choice_key = decisions.get(issue.issue_id, "b")  # default: leave as-is
+        choice_key = decisions.get(issue.issue_id, "b")
         _, action = issue.options.get(choice_key, ("Leave as-is", "leave"))
 
         if issue.issue_id == "duplicates":
@@ -196,7 +235,6 @@ def apply_user_decisions(df: pd.DataFrame, pending: list, decisions: dict) -> pd
             mode_val = df[col].mode()
             if not mode_val.empty:
                 df[col] = df[col].fillna(mode_val[0])
-        # "leave" -> do nothing
 
     return df
 
@@ -213,12 +251,15 @@ def collect_decisions_cli(pending: list) -> dict:
     print("=" * 60)
 
     for issue in pending:
-        issue.display()
+        print(f"\n{issue.description}")
+        for key, (label, _) in issue.options.items():
+            marker = " (AI recommended)" if issue.recommended == key else ""
+            print(f"  [{key}] {label}{marker}")
         valid_keys = list(issue.options.keys())
-        choice = input(f"Choose [{'/'.join(valid_keys)}]: ").strip().lower()
+        default = issue.recommended if issue.recommended in valid_keys else valid_keys[-1]
+        choice = input(f"Choose [{'/'.join(valid_keys)}] (default {default}): ").strip().lower()
         if choice not in valid_keys:
-            print(f"Invalid choice, defaulting to '{valid_keys[-1]}' (leave as-is).")
-            choice = "b" if "b" in valid_keys else valid_keys[-1]
+            choice = default
         decisions[issue.issue_id] = choice
 
     return decisions
