@@ -2,9 +2,7 @@ import axios from "axios";
 
 const API_BASE_URL = "http://localhost:8000";
 
-export const api = axios.create({
-  baseURL: API_BASE_URL,
-});
+export const api = axios.create({ baseURL: API_BASE_URL });
 
 export const uploadFile = async (file) => {
   const formData = new FormData();
@@ -20,6 +18,21 @@ export const askQuestion = async (question) => {
   return response.data;
 };
 
-export const getChartUrl = () => {
-  return `${API_BASE_URL}/chart?t=${Date.now()}`; // cache-bust so new charts always load
+export const getChartUrl = () => `${API_BASE_URL}/chart?t=${Date.now()}`;
+
+export const getDatasetSummary = async () => {
+  const response = await api.get("/dataset-summary");
+  return response.data;
 };
+
+export const getTableDashboard = async (tableName) => {
+  const response = await api.get("/table-dashboard", { params: { table_name: tableName } });
+  return response.data;
+};
+
+export const getInsights = async () => {
+  const response = await api.get("/generate-insights");
+  return response.data;
+};
+
+export const exportReportUrl = () => `${API_BASE_URL}/export-report`;
