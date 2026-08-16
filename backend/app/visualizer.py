@@ -10,6 +10,16 @@ from app.api_utils import call_with_retry
 client = genai.Client(api_key=config.GEMINI_API_KEY)
 
 
+def is_chart_worthy(result) -> bool:
+    if isinstance(result, (int, float, str)):
+        return False
+    if isinstance(result, pd.Series):
+        return len(result) >= 2
+    if isinstance(result, pd.DataFrame):
+        return len(result) >= 2 and result.shape[1] >= 1
+    return False
+
+
 def describe_result(result) -> str:
     if isinstance(result, (int, float)):
         return f"Single numeric value: {result}"
@@ -30,7 +40,6 @@ def describe_result(result) -> str:
 
 
 def generate_chart_code(question: str, result) -> str:
-    """Asks Gemini to write full, professional-quality matplotlib/seaborn code for this result."""
     result_desc = describe_result(result)
 
     prompt = f"""You are a senior data visualization designer. A user asked this question:
@@ -43,9 +52,15 @@ Write Python code using matplotlib and seaborn to create a publication-quality, 
 
 Requirements:
 - Choose the most appropriate chart type yourself (bar, line, pie, histogram, heatmap, scatter, etc.) based on what best represents this data.
+- Match the chart type strictly to what the question is actually asking: a single ranked comparison wants a bar chart, a trend over time wants a line chart, a share/percentage-of-whole with under 8 categories wants a pie chart, distribution of one numeric column wants a histogram, relationship between two numeric variables wants a scatter plot. Do not default to bar chart out of habit if another type fits the question better.
 - Use an attractive, modern color palette (e.g. seaborn "Set2", "viridis", "rocket", or similar) — never default matplotlib blue.
 - Use clean, readable fonts, a bold clear title based on the question, labeled axes, and no unnecessary chart clutter (remove top/right spines, use subtle gridlines).
-- Add data labels/annotations on bars or slices where it improves readability.
+- CRITICAL: since this image will be downloaded and viewed statically (no hover/tooltips available), you MUST add visible data labels directly on the chart:
+  - Bar charts: put the value on top of (or at the end of) every bar using ax.bar_label() or ax.text() for each bar, formatted with thousands separators / 1 decimal place as appropriate.
+  - Line charts: annotate each data point with its value using ax.annotate() or ax.text() near each point.
+  - Pie charts: show both percentage AND the actual value in each slice label (e.g. "Electronics: 42% ($120K)").
+  - Histograms: show the count on top of each bin bar.
+  - Scatter plots: labeling every point is optional if it would be cluttered, but label any clear outliers.
 - Rotate x-axis labels if they would overlap.
 - If any axis contains Period, Timestamp, or datetime objects, convert them to strings first (e.g. .astype(str)) before plotting.
 - Assume `result`, `pd` (pandas), `plt` (matplotlib.pyplot), and `sns` (seaborn) are already available — do NOT import anything.
@@ -64,18 +79,19 @@ Return ONLY executable Python code. No explanations, no markdown fences.
 
 
 def render_chart(result, question: str, save_path: str = None, max_attempts: int = 2):
-    """Generates chart code via Gemini, executes it safely, retries once on failure."""
     from app.executor import ExecutionError
-    if isinstance(result, (int, float)):
-        return None, "Result is a single number — no chart generated."
+
+    if not is_chart_worthy(result):
+        return None, "not_chart_worthy"
+
     code = generate_chart_code(question, result)
 
     for attempt in range(1, max_attempts + 1):
         safe_globals = {
             "pd": pd, "plt": plt, "sns": sns,
             "__builtins__": {"len": len, "range": range, "list": list, "str": str,
-                  "int": int, "float": float, "round": round, "enumerate": enumerate,
-                  "dict": dict, "zip": zip, "sorted": sorted, "min": min, "max": max}
+                              "int": int, "float": float, "round": round, "enumerate": enumerate,
+                              "dict": dict, "zip": zip, "sorted": sorted, "min": min, "max": max}
         }
         local_vars = {"result": result}
 
@@ -94,7 +110,6 @@ def render_chart(result, question: str, save_path: str = None, max_attempts: int
             if attempt == max_attempts:
                 print(f"Chart generation failed after {max_attempts} attempts: {e}")
                 return None, code
-            # retry: feed the error back
-            code = generate_chart_code(question, result)  # simple retry, regenerate fresh
+            code = generate_chart_code(question, result)
 
     return None, code

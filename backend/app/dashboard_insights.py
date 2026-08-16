@@ -1,78 +1,9 @@
 import pandas as pd
 import numpy as np
-import json
-from google import genai
-from app.config import config
-from app.api_utils import call_with_retry
-
-client = genai.Client(api_key=config.GEMINI_API_KEY)
+from app.date_utils import smart_to_datetime
 
 VALID_TYPES = {"kpi", "line", "bar", "pie", "table", "correlation", "histogram", "scatter"}
 VALID_AGGS = {"sum", "mean", "count", "max", "min"}
-
-
-def ai_design_dashboard(df: pd.DataFrame) -> dict:
-    """Lets the AI fully design the dashboard, pushed toward genuine variety per dataset."""
-    columns_info = "\n".join([f"- {col} ({df[col].dtype}, {df[col].nunique()} unique values)" for col in df.columns])
-    sample = df.head(5).to_string()
-    numeric_count = len(df.select_dtypes(include="number").columns)
-    cat_count = len(df.select_dtypes(exclude="number").columns)
-
-    prompt = f"""You are a senior BI dashboard designer. Design a dashboard for THIS specific dataset.
-
-Columns:
-{columns_info}
-
-Sample rows:
-{sample}
-
-This dataset has {numeric_count} numeric columns and {cat_count} categorical columns.
-
-IMPORTANT: Do not default to a generic "sales dashboard" template. Actually look at what's unusual
-or interesting about THIS data's shape and design around it. Two different datasets should get
-genuinely different dashboards, not the same KPI+line+bar+pie combo reskinned.
-
-Available widget types, use whichever genuinely fit, not all of them:
-- "kpi": single headline number
-- "line": trend over a real date/sequence column
-- "bar": comparison across categories
-- "pie": composition, only if a categorical column has 2-8 distinct values
-- "table": ranked list, good for many categories or top-N rankings
-- "correlation": heatmap of numeric relationships, only if 3+ numeric columns
-- "histogram": distribution shape of a single numeric column, use when a numeric column's spread
-  itself is interesting (e.g. price distribution, age distribution)
-- "scatter": relationship between two numeric columns, use when two numeric columns might be related
-
-Rules:
-- Design 20 to 60 widgets, exactly as many as this dataset's actual structure supports. Sparse data gets fewer widgets, rich data gets more.
-- Vary widget types meaningfully, don't repeat the same type more than twice unless the data has that many genuinely distinct groupings worth showing separately.
-- For "kpi","line","bar","table": specify metric_column (numeric) and aggregation (sum/mean/count/max/min).
-- For "bar","pie","table" also specify group_by.
-- For "line" specify x_column and metric_column.
-- For "histogram" specify metric_column only.
-- For "scatter" specify x_column and metric_column (both numeric).
-- For "correlation" no extra fields.
-- Assign "size": "small" (kpis), "medium", or "large" (trend/scatter/correlation deserve more space).
-- Only reference columns that exist in the list above.
-
-Return ONLY valid JSON:
-{{
-  "widgets": [ {{"id": "w1", "type": "...", "title": "...", "size": "...", ...fields...}} ],
-  "reasoning": "one sentence explaining the specific design logic for THIS dataset's shape"
-}}
-"""
-    response = call_with_retry(lambda: client.models.generate_content(
-        model="gemini-flash-lite-latest",
-        contents=prompt,
-        config={"temperature": 1.1}
-    ))
-    text = response.text.strip().replace("```json", "").replace("```", "").strip()
-    try:
-        plan = json.loads(text)
-        plan["widgets"] = [w for w in plan.get("widgets", []) if w.get("type") in VALID_TYPES]
-        return plan
-    except Exception:
-        return {"widgets": [], "reasoning": "Could not generate a dashboard plan."}
 
 
 def _aggregate(series: pd.Series, agg: str):
@@ -93,7 +24,6 @@ def _aggregate(series: pd.Series, agg: str):
 
 
 def execute_widget(df: pd.DataFrame, widget: dict):
-    """Executes one AI-designed widget spec against the real dataframe using safe pandas ops."""
     wtype = widget.get("type")
     agg = widget.get("aggregation", "sum") if widget.get("aggregation") in VALID_AGGS else "sum"
 
@@ -109,13 +39,16 @@ def execute_widget(df: pd.DataFrame, widget: dict):
             if x_col not in df.columns or metric not in df.columns:
                 return None
             temp = df.copy()
-            temp["_x"] = pd.to_datetime(temp[x_col], errors="coerce")
+            temp["_x"] = smart_to_datetime(temp[x_col])
             temp = temp.dropna(subset=["_x"])
             if temp.empty:
                 return None
-            temp["_period"] = temp["_x"].dt.to_period("M").astype(str)
+            span_days = (temp["_x"].max() - temp["_x"].min()).days
+            freq = "Y" if span_days > 900 else "M"
+            temp["_period"] = temp["_x"].dt.to_period(freq).astype(str)
             grouped = temp.groupby("_period")[metric].agg(agg if agg != "count" else "count").reset_index()
             grouped.columns = ["period", "value"]
+            grouped = grouped.sort_values("period")
             return {"data": grouped.to_dict("records")}
 
         if wtype in ("bar", "pie", "table"):
@@ -168,16 +101,3 @@ def execute_widget(df: pd.DataFrame, widget: dict):
         return None
 
     return None
-
-
-def compute_dashboard_insights(df: pd.DataFrame) -> dict:
-    plan = ai_design_dashboard(df)
-    widgets_out = []
-
-    for widget in plan.get("widgets", []):
-        result = execute_widget(df, widget)
-        if result is None:
-            continue
-        widgets_out.append({**widget, **result})
-
-    return {"widgets": widgets_out, "reasoning": plan.get("reasoning", "")}

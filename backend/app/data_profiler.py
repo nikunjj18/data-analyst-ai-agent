@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from app.date_utils import smart_to_datetime
 
 
 def _is_likely_id_column(col_name: str, series: pd.Series) -> bool:
@@ -20,7 +21,7 @@ def _is_likely_date_column(col_name: str, series: pd.Series) -> bool:
     date_hints = ["date", "time", "day", "month", "year", "created", "updated", "timestamp"]
     if any(h in name_lower for h in date_hints):
         try:
-            parsed = pd.to_datetime(series.dropna().head(50), errors="coerce")
+            parsed = smart_to_datetime(series.dropna().head(50))
             return parsed.notna().mean() > 0.7
         except Exception:
             return False
@@ -46,7 +47,7 @@ def profile_numeric_column(series: pd.Series) -> dict:
         "skew": round(float(clean.skew()), 2) if clean.count() > 2 else 0,
         "outlier_count": int(outlier_mask.sum()),
         "outlier_pct": round(float(outlier_mask.mean() * 100), 1),
-        "is_mostly_zero_or_binary": clean.nunique() <= 2,
+        "is_mostly_zero_or_binary": bool(clean.nunique() <= 2),
         "is_likely_percentage": bool(0 <= clean.min() and clean.max() <= 1.0001),
         "is_likely_rate_0_100": bool(0 <= clean.min() and clean.max() <= 100 and clean.nunique() > 2),
     }
@@ -72,11 +73,6 @@ def profile_categorical_column(series: pd.Series) -> dict:
 
 
 def profile_dataset(df: pd.DataFrame) -> dict:
-    """
-    Computes real, grounded statistics about the dataset — no LLM involved.
-    This is the factual basis every later AI reasoning step will be given,
-    instead of the AI guessing from column names and a few sample rows alone.
-    """
     profile = {
         "row_count": len(df),
         "column_count": len(df.columns),
@@ -93,23 +89,18 @@ def profile_dataset(df: pd.DataFrame) -> dict:
         null_count = int(series.isnull().sum())
         null_pct = round(null_count / max(len(df), 1) * 100, 1)
 
-        col_entry = {
-            "name": col,
-            "dtype": str(series.dtype),
-            "null_count": null_count,
-            "null_pct": null_pct,
-        }
+        col_entry = {"name": col, "dtype": str(series.dtype), "null_count": null_count, "null_pct": null_pct}
 
         is_id = _is_likely_id_column(col, series)
         is_date = _is_likely_date_column(col, series)
-        is_numeric = pd.api.types.is_numeric_dtype(series) and not is_id
+        is_numeric = pd.api.types.is_numeric_dtype(series) and not is_id and not is_date
 
-        if is_id:
-            col_entry["role"] = "identifier"
-            profile["id_columns"].append(col)
-        elif is_date:
+        if is_date:
             col_entry["role"] = "date"
             profile["date_columns"].append(col)
+        elif is_id:
+            col_entry["role"] = "identifier"
+            profile["id_columns"].append(col)
         elif is_numeric:
             col_entry["role"] = "numeric"
             col_entry["stats"] = profile_numeric_column(series)

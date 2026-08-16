@@ -8,12 +8,15 @@ client = genai.Client(api_key=config.GEMINI_API_KEY)
 
 def infer_domain_and_metrics(profile: dict) -> dict:
     """
-    Given the REAL computed profile (not guesses), asks the AI to infer the business
-    domain and select which columns are the key metrics/dimensions — grounded reasoning,
-    not blind guessing from column names alone.
+    Given the REAL computed profile, asks the AI to infer the business domain,
+    select key metrics, AND decide the correct aggregation for each metric based
+    on what it semantically represents (e.g. revenue -> sum, price/rating/age -> average,
+    a rate/percentage column -> average, a count of transactions -> sum or count).
     """
     numeric_summary = "\n".join([
-        f"- {c['name']}: mean={c['stats']['mean']}, skew={c['stats']['skew']}, outliers={c['stats']['outlier_pct']}%"
+        f"- {c['name']}: mean={c['stats']['mean']}, min={c['stats']['min']}, max={c['stats']['max']}, "
+        f"skew={c['stats']['skew']}, is_likely_percentage={c['stats'].get('is_likely_percentage')}, "
+        f"is_likely_rate_0_100={c['stats'].get('is_likely_rate_0_100')}"
         for c in profile["columns"] if c["role"] == "numeric"
     ])
     categorical_summary = "\n".join([
@@ -22,8 +25,9 @@ def infer_domain_and_metrics(profile: dict) -> dict:
     ])
     date_summary = ", ".join(profile["date_columns"]) if profile["date_columns"] else "none"
 
-    prompt = f"""You are a senior data analyst. Based on ACTUAL computed statistics (not guesses) about
-this dataset, infer its business domain and identify the key metrics.
+    prompt = f"""You are a senior data analyst. Based on ACTUAL computed statistics about this dataset,
+infer its business domain and identify the key metrics — AND decide the semantically correct
+aggregation for each metric.
 
 Dataset: {profile['row_count']} rows, {profile['column_count']} columns
 
@@ -35,20 +39,33 @@ Categorical columns (with real stats):
 
 Date columns: {date_summary}
 
-Infer the business domain (e.g. sales, HR, marketing, finance, customer/support, operations, generic).
-Then select which numeric column is the SINGLE most important primary metric for this domain
-(e.g. revenue for sales, salary for HR, spend for marketing), and up to 2 secondary metrics.
-Select up to 3 categorical columns that are the most meaningful dimensions to break metrics down by
-(prefer low-cardinality, business-meaningful columns over IDs or noise).
+Infer the business domain (sales, HR, marketing, finance, customer/support, operations, generic).
+
+For each metric you select, decide the CORRECT aggregation based on what the column means:
+- "sum" for additive quantities: revenue, sales, quantity, cost, spend, count of items, total X
+- "mean" for rates, prices, scores, ratings, ages, percentages, durations, or anything where
+  adding across rows would be meaningless (e.g. averaging unit_price, discount_pct, satisfaction_score, age)
+- "count" for counting occurrences/records rather than summing a value
+- "max" or "min" only if the column represents a ceiling/floor that's more meaningful than sum/mean
+
+A column being "likely a percentage" or "likely a rate 0-100" is a strong signal it should use "mean", never "sum".
+
+Select the single most important primary metric, and up to 2 secondary metrics. Select up to 3
+categorical columns as the most meaningful dimensions (prefer low-cardinality, business-meaningful
+columns over IDs or noise).
 
 Return ONLY valid JSON:
 {{
   "domain": "sales",
   "domain_reasoning": "one sentence",
   "primary_metric": "<column name or null>",
-  "secondary_metrics": ["<column name>", ...],
+  "primary_metric_agg": "<sum|mean|count|max|min>",
+  "primary_metric_label": "<e.g. 'Total Revenue' or 'Average Rating' — matches the aggregation, not always 'Total'>",
+  "secondary_metrics": [
+    {{"column": "<name>", "agg": "<sum|mean|count|max|min>", "label": "<matching label>"}}
+  ],
   "key_dimensions": ["<column name>", ...],
-  "dashboard_title": "<a specific, professional title for this dashboard, e.g. 'Sales Performance Overview', not generic>"
+  "dashboard_title": "<specific, professional title for this dashboard>"
 }}
 """
     response = call_with_retry(lambda: client.models.generate_content(
@@ -57,11 +74,17 @@ Return ONLY valid JSON:
     ))
     text = response.text.strip().replace("```json", "").replace("```", "").strip()
     try:
-        return json.loads(text)
+        result = json.loads(text)
+        # Basic safety defaults if the model omits fields
+        result.setdefault("primary_metric_agg", "sum")
+        result.setdefault("primary_metric_label", None)
+        result.setdefault("secondary_metrics", [])
+        return result
     except Exception:
+        fallback_metric = profile["numeric_columns"][0] if profile["numeric_columns"] else None
         return {
             "domain": "generic", "domain_reasoning": "",
-            "primary_metric": profile["numeric_columns"][0] if profile["numeric_columns"] else None,
+            "primary_metric": fallback_metric, "primary_metric_agg": "sum", "primary_metric_label": None,
             "secondary_metrics": [], "key_dimensions": profile["categorical_columns"][:2],
             "dashboard_title": "Dataset Overview",
         }
