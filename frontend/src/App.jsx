@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { DatasetProvider } from "./DatasetContext";
 import TopNav from "./components/TopNav";
 import UploadData from "./pages/UploadData";
@@ -8,10 +8,13 @@ import ExportReport from "./pages/ExportReport";
 import "./App.css";
 
 function AppShell() {
+  const location = useLocation();
+  const isAskPage = location.pathname === "/ask";
+
   return (
     <div className="app-shell">
       <TopNav />
-      <main className="page-body">
+      <main className={isAskPage ? "page-body-full" : "page-body"}>
         <Routes>
           <Route path="/" element={<UploadData />} />
           <Route path="/dashboard" element={<Dashboard />} />

@@ -1,4 +1,5 @@
 import axios from "axios";
+export const exportDashboardUrl = () => `${API_BASE_URL}/export-dashboard`;
 
 const API_BASE_URL = "http://localhost:8000";
 
@@ -18,12 +19,7 @@ export const askQuestion = async (question) => {
   return response.data;
 };
 
-export const getChartUrl = () => `${API_BASE_URL}/chart?t=${Date.now()}`;
-
-export const getDatasetSummary = async () => {
-  const response = await api.get("/dataset-summary");
-  return response.data;
-};
+export const getChartUrlById = (chartId) => `${API_BASE_URL}/chart/${chartId}`;
 
 export const getTableDashboard = async (tableName) => {
   const response = await api.get("/table-dashboard", { params: { table_name: tableName } });
@@ -32,6 +28,16 @@ export const getTableDashboard = async (tableName) => {
 
 export const getInsights = async () => {
   const response = await api.get("/generate-insights");
+  return response.data;
+};
+
+export const getHistory = async () => {
+  const response = await api.get("/history");
+  return response.data;
+};
+
+export const switchDataset = async (id) => {
+  const response = await api.post("/switch-dataset", { id });
   return response.data;
 };
 

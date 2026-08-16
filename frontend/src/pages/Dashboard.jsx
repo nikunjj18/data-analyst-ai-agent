@@ -3,11 +3,13 @@ import {
   LineChart, Line, PieChart, Pie, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell, Legend, ScatterChart, Scatter,
 } from "recharts";
-import { Sparkles, Lightbulb, Table2 } from "lucide-react";
+import { Sparkles, AlertTriangle, TrendingUp, TrendingDown, Minus, Table2, Download } from "lucide-react";
+import { exportDashboardUrl } from "../api";
 import { useDataset } from "../DatasetContext";
 import { api, getTableDashboard } from "../api";
 
 const COLORS = ["#00D4B8", "#F5A623", "#FF6B9D", "#4ADE80", "#818CF8", "#FB923C", "#38BDF8", "#F2545B"];
+const TOOLTIP_STYLE = { background: "#171C26", border: "1px solid #1B212C", fontSize: 12, color: "#E8EBEF" };
 
 function sizeToSpan(size) {
   if (size === "small") return "span 3";
@@ -15,17 +17,27 @@ function sizeToSpan(size) {
   return "span 6";
 }
 
+function KpiCard({ kpi }) {
+  const comp = kpi.comparison;
+  const displayValue = kpi.formatted_value || (typeof kpi.value === "number" ? kpi.value.toLocaleString() : kpi.value);
+  return (
+    <div className="card kpi-tile">
+      <div className="kpi-label">{kpi.label}</div>
+      <div className="kpi-value mono">{displayValue}</div>
+      {comp && (
+        <div className={`kpi-trend ${comp.direction}`}>
+          {comp.direction === "up" && <TrendingUp size={12} />}
+          {comp.direction === "down" && <TrendingDown size={12} />}
+          {comp.direction === "flat" && <Minus size={12} />}
+          {Math.abs(comp.pct_change)}% vs {comp.previous_period}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Widget({ widget }) {
   const { type, title, size } = widget;
-
-  if (type === "kpi") {
-    return (
-      <div className="card kpi-tile" style={{ gridColumn: sizeToSpan(size) }}>
-        <div className="kpi-label">{title}</div>
-        <div className="kpi-value mono">{widget.value?.toLocaleString?.() ?? widget.value}</div>
-      </div>
-    );
-  }
 
   if (type === "line" && widget.data?.length) {
     return (
@@ -36,7 +48,7 @@ function Widget({ widget }) {
             <CartesianGrid strokeDasharray="3 3" stroke="#1B212C" />
             <XAxis dataKey="period" tick={{ fill: "#7C8798", fontSize: 11 }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fill: "#7C8798", fontSize: 11 }} axisLine={false} tickLine={false} />
-            <Tooltip contentStyle={{ background: "#171C26", border: "1px solid #1B212C", fontSize: 12 }} />
+            <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: "#E8EBEF" }} itemStyle={{ color: "#E8EBEF" }} />
             <Line type="monotone" dataKey="value" stroke="#00D4B8" strokeWidth={2.5} dot={{ r: 3, fill: "#00D4B8" }} />
           </LineChart>
         </ResponsiveContainer>
@@ -53,7 +65,7 @@ function Widget({ widget }) {
             <CartesianGrid strokeDasharray="3 3" stroke="#1B212C" vertical={false} />
             <XAxis dataKey="name" tick={{ fill: "#7C8798", fontSize: 10 }} axisLine={false} tickLine={false} angle={-20} textAnchor="end" height={50} />
             <YAxis tick={{ fill: "#7C8798", fontSize: 11 }} axisLine={false} tickLine={false} />
-            <Tooltip contentStyle={{ background: "#171C26", border: "1px solid #1B212C", fontSize: 12 }} />
+            <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: "#E8EBEF" }} itemStyle={{ color: "#E8EBEF" }} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
             <Bar dataKey="value" radius={[6, 6, 0, 0]}>
               {widget.data.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
             </Bar>
@@ -72,8 +84,13 @@ function Widget({ widget }) {
             <Pie data={widget.data} dataKey="value" nameKey="name" innerRadius={45} outerRadius={78} paddingAngle={2}>
               {widget.data.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
             </Pie>
-            <Tooltip contentStyle={{ background: "#171C26", border: "1px solid #1B212C", fontSize: 12 }} formatter={(v, n, p) => [`${v} (${p.payload.pct}%)`, n]} />
-            <Legend wrapperStyle={{ fontSize: 11 }} />
+            <Tooltip
+              contentStyle={TOOLTIP_STYLE}
+              labelStyle={{ color: "#E8EBEF" }}
+              itemStyle={{ color: "#E8EBEF" }}
+              formatter={(v, n, p) => [`${v} (${p.payload.pct}%)`, n]}
+            />
+            <Legend wrapperStyle={{ fontSize: 11, color: "#E8EBEF" }} />
           </PieChart>
         </ResponsiveContainer>
       </div>
@@ -131,7 +148,7 @@ function Widget({ widget }) {
             <CartesianGrid strokeDasharray="3 3" stroke="#1B212C" vertical={false} />
             <XAxis dataKey="name" tick={{ fill: "#7C8798", fontSize: 9 }} axisLine={false} tickLine={false} angle={-30} textAnchor="end" height={45} />
             <YAxis tick={{ fill: "#7C8798", fontSize: 11 }} axisLine={false} tickLine={false} />
-            <Tooltip contentStyle={{ background: "#171C26", border: "1px solid #1B212C", fontSize: 12 }} />
+            <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: "#E8EBEF" }} itemStyle={{ color: "#E8EBEF" }} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
             <Bar dataKey="value" fill="#818CF8" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
@@ -148,7 +165,7 @@ function Widget({ widget }) {
             <CartesianGrid strokeDasharray="3 3" stroke="#1B212C" />
             <XAxis dataKey="x" type="number" tick={{ fill: "#7C8798", fontSize: 11 }} axisLine={false} tickLine={false} />
             <YAxis dataKey="y" type="number" tick={{ fill: "#7C8798", fontSize: 11 }} axisLine={false} tickLine={false} />
-            <Tooltip contentStyle={{ background: "#171C26", border: "1px solid #1B212C", fontSize: 12 }} />
+            <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: "#E8EBEF" }} itemStyle={{ color: "#E8EBEF" }} cursor={{ stroke: "#7C8798" }} />
             <Scatter data={widget.data} fill="#FF6B9D" fillOpacity={0.7} />
           </ScatterChart>
         </ResponsiveContainer>
@@ -159,37 +176,55 @@ function Widget({ widget }) {
   return null;
 }
 
-function WidgetGrid({ data }) {
+function FullDashboard({ data }) {
   return (
     <div>
-      {data.reasoning && (
-        <div className="ai-note">
+      {data.dashboard_title && (
+  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+    <h2 style={{ fontSize: 19 }}>{data.dashboard_title}</h2>
+    <a href={exportDashboardUrl()} target="_blank" rel="noreferrer" className="btn btn-ghost" style={{ fontSize: 12 }}>
+      <Download size={13} /> Download Dashboard
+    </a>
+  </div>
+)}
+      {data.domain_reasoning && (
+        <div className="ai-note" style={{ marginTop: 8 }}>
           <Sparkles size={13} color="var(--accent)" />
-          <span><b>Dashboard design:</b> {data.reasoning}</span>
+          <span>{data.domain_reasoning}</span>
         </div>
       )}
-      {data.ai_insights?.length > 0 && (
+
+      {data.kpis?.length > 0 && (
+        <div className="kpi-row">
+          {data.kpis.map((k, i) => <KpiCard key={i} kpi={k} />)}
+        </div>
+      )}
+
+      {data.anomalies?.length > 0 && (
         <div className="insight-strip">
-          {data.ai_insights.map((insight, i) => (
-            <div key={i} className="insight-chip">
-              <Lightbulb size={13} color="var(--warn)" />
-              <span>{insight}</span>
+          {data.anomalies.map((a, i) => (
+            <div key={i} className="insight-chip anomaly-chip">
+              <AlertTriangle size={13} color="var(--danger)" />
+              <span>{a.message}</span>
             </div>
           ))}
         </div>
       )}
+
       <div className="widget-grid">
-        {data.widgets.map((w) => <Widget key={w.id} widget={w} />)}
+        {data.widgets?.map((w) => <Widget key={w.id} widget={w} />)}
       </div>
     </div>
   );
 }
 
 function Dashboard() {
-  const { isReady, dashboardData, setDashboardData } = useDataset();
+  const {
+    isReady, dashboardData, setDashboardData,
+    tableDashboards, setTableDashboards,
+  } = useDataset();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [tableDashboards, setTableDashboards] = useState(null);
   const [tablesLoading, setTablesLoading] = useState(false);
 
   useEffect(() => {
@@ -205,42 +240,36 @@ function Dashboard() {
   useEffect(() => {
     if (!dashboardData?.multi_table || tableDashboards) return;
     setTablesLoading(true);
-
     const tables = dashboardData.tables || [];
     Promise.all(
       tables.map((t) =>
         getTableDashboard(t)
-          .then((res) => ({ table: t, data: res }))
-          .catch(() => ({ table: t, data: null }))
+          .then((res) => ({ table: t, data: res, error: null }))
+          .catch((err) => ({ table: t, data: null, error: err.response?.data?.detail || err.message }))
       )
     ).then((results) => {
       setTableDashboards(results);
       setTablesLoading(false);
     });
-  }, [dashboardData, tableDashboards]);
+  }, [dashboardData, tableDashboards, setTableDashboards]);
 
   if (!isReady) return <div className="hero-empty"><p>Upload a dataset first.</p></div>;
-  if (loading) return <div style={{ color: "var(--text-dim)", fontSize: 13 }}>Designing your dashboard...</div>;
+  if (loading) return <div style={{ color: "var(--text-dim)", fontSize: 13 }}>Analyzing your dataset and designing a dashboard...</div>;
   if (error) return <div style={{ color: "var(--danger)", fontSize: 13 }}>{error}</div>;
 
   if (dashboardData?.multi_table) {
     return (
       <div>
-        {tablesLoading && (
-          <div style={{ color: "var(--text-dim)", fontSize: 13, marginBottom: 20 }}>
-            Building dashboards for {dashboardData.tables?.length || 0} tables...
-          </div>
-        )}
-
-        {!tablesLoading && tableDashboards?.map(({ table, data }) => (
-          <div key={table} style={{ marginBottom: 32 }}>
-            <div className="card-title" style={{ fontSize: 15, marginBottom: 14 }}>
-              <Table2 size={15} /> {table}
-            </div>
+        {tablesLoading && <div style={{ color: "var(--text-dim)", fontSize: 13, marginBottom: 16 }}>Building dashboards for {dashboardData.tables?.length || 0} tables...</div>}
+        {!tablesLoading && tableDashboards?.map(({ table, data, error: tableError }) => (
+          <div key={table} style={{ marginBottom: 24 }}>
+            <div className="card-title" style={{ fontSize: 15, marginBottom: 10 }}><Table2 size={15} /> {table}</div>
             {data?.widgets?.length > 0 ? (
-              <WidgetGrid data={data} />
+              <FullDashboard data={data} />
             ) : (
-              <div style={{ color: "var(--text-dim)", fontSize: 12.5 }}>Not enough structure in "{table}" for a dashboard.</div>
+              <div style={{ color: "var(--danger)", fontSize: 12.5 }}>
+                {tableError ? `Failed to build dashboard for "${table}": ${tableError}` : `Not enough structure in "${table}" for a dashboard.`}
+              </div>
             )}
           </div>
         ))}
@@ -252,7 +281,7 @@ function Dashboard() {
     return <div style={{ color: "var(--text-dim)", fontSize: 13 }}>Not enough structure in this dataset to build a dashboard yet.</div>;
   }
 
-  return <WidgetGrid data={dashboardData} />;
+  return <FullDashboard data={dashboardData} />;
 }
 
 export default Dashboard;

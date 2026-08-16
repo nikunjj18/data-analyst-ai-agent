@@ -13,15 +13,27 @@ function TopNav() {
   ];
 
   return (
-    <header className="topnav">
-      <div className="topnav-left">
-        <div className="logo-mark">#</div>
-        <div>
+    <header className="topnav-wrap">
+      <div className="topnav-top">
+        <div className="topnav-spacer" />
+
+        <div className="topnav-center">
           <h1 className="topnav-title">Data Analyst Agent</h1>
           <div className="pulse-line">
             <svg viewBox="0 0 120 14" preserveAspectRatio="none">
-              <path className="pulse-path" d="M0,7 L18,7 L23,2 L28,12 L33,3 L38,10 L43,7 L70,7 L75,2 L80,12 L85,3 L90,10 L95,7 L120,7" />
+              <path
+                className="pulse-path"
+                d="M0,7 L18,7 L23,2 L28,12 L33,3 L38,10 L43,7 L70,7 L75,2 L80,12 L85,3 L90,10 L95,7 L120,7"
+              />
             </svg>
+          </div>
+          <span className="made-by">by Nikunj</span>
+        </div>
+
+        <div className="topnav-right">
+          <div className={`status-pill ${isReady ? "ready" : ""}`}>
+            <span className="status-dot"></span>
+            {isReady ? dataset.name : "No data"}
           </div>
         </div>
       </div>
@@ -34,20 +46,17 @@ function TopNav() {
               key={item.to}
               to={item.to}
               end={item.to === "/"}
-              className={({ isActive }) => `topnav-tab ${isActive ? "active" : ""} ${item.locked ? "locked" : ""}`}
+              className={({ isActive }) =>
+                `topnav-tab ${isActive ? "active" : ""} ${item.locked ? "locked" : ""}`
+              }
               onClick={(e) => item.locked && e.preventDefault()}
             >
               <Icon size={15} />
-              {item.label}
+              <span>{item.label}</span>
             </NavLink>
           );
         })}
       </nav>
-
-      <div className={`status-pill ${isReady ? "ready" : ""}`}>
-        <span className="status-dot"></span>
-        {isReady ? dataset.name : "No data"}
-      </div>
     </header>
   );
 }
