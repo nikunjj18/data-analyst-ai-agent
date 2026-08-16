@@ -1,8 +1,7 @@
 import axios from "axios";
 export const exportDashboardUrl = () => `${API_BASE_URL}/export-dashboard`;
 
-const API_BASE_URL = "http://localhost:8000";
-
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 export const api = axios.create({ baseURL: API_BASE_URL });
 
 export const uploadFile = async (file) => {
