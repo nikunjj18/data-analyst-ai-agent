@@ -26,13 +26,23 @@ from app.schema_reader import get_table_names
 
 app = FastAPI(title="Data Analyst AI Agent", version="1.0")
 
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=["http://localhost:5173", "https://data-analyst-ai-agent-nikunj.vercel.app/"],
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
+
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "https://data-analyst-ai-agent-nikunj.vercel.app/"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 session = {
     "df": None, "quality_report": None, "memory": ConversationMemory(),
