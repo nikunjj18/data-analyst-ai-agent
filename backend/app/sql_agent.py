@@ -3,6 +3,7 @@ from app.config import config
 from app.api_utils import call_with_retry
 from app.sql_executor import SQLExecutionError, safe_execute_sql_with_timeout
 from app.logger import log_event, log_error
+from langsmith import traceable
 
 client = genai.Client(api_key=config.GEMINI_API_KEY)
 
@@ -32,7 +33,7 @@ Rules:
 """
     return prompt
 
-
+@traceable(name="generate_sql_with_retry")
 def generate_sql_with_retry(question: str, relevant_tables: list[dict], db_path: str, memory=None, max_attempts: int = 3):
     """Generates SQL, executes it, self-corrects on failure. Returns (result_df, final_sql, history)."""
 

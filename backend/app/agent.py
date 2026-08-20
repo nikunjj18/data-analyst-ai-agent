@@ -4,8 +4,10 @@ from app.config import config
 from app.api_utils import call_with_retry
 from app.executor import safe_execute_with_timeout
 from app.logger import log_event, log_error
+from langsmith import traceable
 
 client = genai.Client(api_key=config.GEMINI_API_KEY)
+
 
 
 def load_data(csv_path: str) -> pd.DataFrame:
@@ -67,7 +69,7 @@ def generate_code(question: str, df: pd.DataFrame, quality_report=None, memory=N
     code = code.replace("```python", "").replace("```", "").strip()
     return code
 
-
+@traceable(name="generate_code_with_retry")
 def generate_code_with_retry(question: str, df: pd.DataFrame, quality_report=None, memory=None, max_attempts: int = 3):
     from app.executor import safe_execute_with_timeout, ExecutionError
 
@@ -172,6 +174,7 @@ date, or general knowledge), say so honestly and redirect them toward asking abo
     ))
     return response.text.strip()
 
+@traceable(name="generate_explanation")
 def generate_explanation(question: str, result, code: str) -> str:
     """Generates a short natural-language explanation of why the result is what it is."""
     prompt = f"""A data analyst asked: "{question}"

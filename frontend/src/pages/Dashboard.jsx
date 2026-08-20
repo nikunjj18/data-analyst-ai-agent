@@ -238,20 +238,26 @@ function Dashboard() {
   }, [isReady, dashboardData, setDashboardData]);
 
   useEffect(() => {
-    if (!dashboardData?.multi_table || tableDashboards) return;
-    setTablesLoading(true);
-    const tables = dashboardData.tables || [];
-    Promise.all(
-      tables.map((t) =>
-        getTableDashboard(t)
-          .then((res) => ({ table: t, data: res, error: null }))
-          .catch((err) => ({ table: t, data: null, error: err.response?.data?.detail || err.message }))
-      )
-    ).then((results) => {
-      setTableDashboards(results);
-      setTablesLoading(false);
-    });
-  }, [dashboardData, tableDashboards, setTableDashboards]);
+  if (!dashboardData?.multi_table || tableDashboards) return;
+  setTablesLoading(true);
+  const tables = dashboardData.tables || [];
+
+  const loadSequentially = async () => {
+    const results = [];
+    for (const t of tables) {
+      try {
+        const res = await getTableDashboard(t);
+        results.push({ table: t, data: res, error: null });
+      } catch (err) {
+        results.push({ table: t, data: null, error: err.response?.data?.detail || err.message });
+      }
+      setTableDashboards([...results]); // update progressively so tables appear as they finish
+    }
+    setTablesLoading(false);
+  };
+
+  loadSequentially();
+}, [dashboardData, tableDashboards, setTableDashboards]);
 
   if (!isReady) return <div className="hero-empty"><p>Upload a dataset first.</p></div>;
   if (loading) return <div style={{ color: "var(--text-dim)", fontSize: 13 }}>Analyzing your dataset and designing a dashboard...</div>;

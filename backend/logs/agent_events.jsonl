@@ -591,3 +591,28 @@
 {"timestamp": "2026-08-16T09:04:45.056858+00:00", "event_type": "question_received", "question": "What is the total quantity by product?", "pipeline": "pandas"}
 {"timestamp": "2026-08-16T09:04:45.933391+00:00", "event_type": "code_generated", "question": "What is the total quantity by product?", "attempt": 1, "code": "result = df.dropna(subset=['product', 'quantity']).groupby('product')['quantity'].sum().reset_index()"}
 {"timestamp": "2026-08-16T09:04:45.936947+00:00", "event_type": "execution_success", "question": "What is the total quantity by product?", "attempt": 1}
+{"timestamp": "2026-08-17T05:59:05.074880+00:00", "event_type": "question_received", "question": "What minerals are present in the dataset?", "pipeline": "sql"}
+{"timestamp": "2026-08-17T05:59:05.954743+00:00", "event_type": "sql_generated", "question": "What minerals are present in the dataset?", "attempt": 1, "sql": "SELECT DISTINCT mineral FROM critical_minerals_supply_master"}
+{"timestamp": "2026-08-17T05:59:05.958143+00:00", "event_type": "execution_success", "question": "What minerals are present in the dataset?", "attempt": 1, "pipeline": "sql"}
+{"timestamp": "2026-08-17T05:59:26.682846+00:00", "event_type": "question_received", "question": "Which countries produce Antimony?", "pipeline": "sql"}
+{"timestamp": "2026-08-17T05:59:27.705724+00:00", "event_type": "sql_generated", "question": "Which countries produce Antimony?", "attempt": 1, "sql": "SELECT DISTINCT country FROM critical_minerals_supply_master WHERE mineral = 'Antimony' AND mine_production_tonnes > 0"}
+{"timestamp": "2026-08-17T05:59:27.708655+00:00", "event_type": "execution_success", "question": "Which countries produce Antimony?", "attempt": 1, "pipeline": "sql"}
+{"timestamp": "2026-08-17T05:59:54.572974+00:00", "event_type": "question_received", "question": "What was Antimony's supply risk score in 2025?", "pipeline": "sql"}
+{"timestamp": "2026-08-17T05:59:55.640052+00:00", "event_type": "sql_generated", "question": "What was Antimony's supply risk score in 2025?", "attempt": 1, "sql": "SELECT supply_risk_score FROM critical_minerals_supply_master WHERE mineral = 'Antimony' AND year = 2025"}
+{"timestamp": "2026-08-17T05:59:55.643086+00:00", "event_type": "execution_success", "question": "What was Antimony's supply risk score in 2025?", "attempt": 1, "pipeline": "sql"}
+{"timestamp": "2026-08-17T06:01:01.468942+00:00", "event_type": "question_received", "question": "What are the different end-use categories in the dataset?", "pipeline": "sql"}
+{"timestamp": "2026-08-17T06:01:02.996825+00:00", "event_type": "sql_generated", "question": "What are the different end-use categories in the dataset?", "attempt": 1, "sql": "SELECT DISTINCT end_use FROM minerals_reference ORDER BY end_use"}
+{"timestamp": "2026-08-17T06:01:03.008419+00:00", "event_type": "execution_success", "question": "What are the different end-use categories in the dataset?", "attempt": 1, "pipeline": "sql"}
+{"timestamp": "2026-08-17T06:01:26.759223+00:00", "event_type": "question_received", "question": "Which countries had active export controls in 2026?", "pipeline": "sql"}
+{"timestamp": "2026-08-17T06:01:27.878020+00:00", "event_type": "sql_generated", "question": "Which countries had active export controls in 2026?", "attempt": 1, "sql": "SELECT DISTINCT country \nFROM critical_minerals_supply_master \nWHERE year = 2026 AND export_control_active = 1"}
+{"timestamp": "2026-08-17T06:01:27.881442+00:00", "event_type": "execution_success", "question": "Which countries had active export controls in 2026?", "attempt": 1, "pipeline": "sql"}
+{"timestamp": "2026-08-17T06:01:47.573961+00:00", "event_type": "question_received", "question": "What is the highest recorded price per tonne for Cobalt?", "pipeline": "sql"}
+{"timestamp": "2026-08-17T06:01:48.740267+00:00", "event_type": "sql_generated", "question": "What is the highest recorded price per tonne for Cobalt?", "attempt": 1, "sql": "SELECT MAX(price_usd_per_tonne) FROM critical_minerals_supply_master WHERE mineral = 'Cobalt'"}
+{"timestamp": "2026-08-17T06:01:48.744260+00:00", "event_type": "execution_success", "question": "What is the highest recorded price per tonne for Cobalt?", "attempt": 1, "pipeline": "sql"}
+{"timestamp": "2026-08-17T06:02:02.118489+00:00", "event_type": "question_received", "question": "What years are covered by the dataset?", "pipeline": "sql"}
+{"timestamp": "2026-08-17T06:02:03.248829+00:00", "event_type": "sql_generated", "question": "What years are covered by the dataset?", "attempt": 1, "sql": "SELECT DISTINCT year FROM critical_minerals_supply_master ORDER BY year"}
+{"timestamp": "2026-08-17T06:02:03.251982+00:00", "event_type": "execution_success", "question": "What years are covered by the dataset?", "attempt": 1, "pipeline": "sql"}
+{"timestamp": "2026-08-17T06:02:32.577360+00:00", "event_type": "question_received", "question": "What are the top 5 minerals by average supply risk score?", "pipeline": "sql"}
+{"timestamp": "2026-08-17T06:02:33.494099+00:00", "event_type": "sql_generated", "question": "What are the top 5 minerals by average supply risk score?", "attempt": 1, "sql": "SELECT mineral\nFROM critical_minerals_supply_master\nGROUP BY mineral\nORDER BY AVG(supply_risk_score) DESC\nLIMIT 5"}
+{"timestamp": "2026-08-17T06:02:33.497587+00:00", "event_type": "execution_success", "question": "What are the top 5 minerals by average supply risk score?", "attempt": 1, "pipeline": "sql"}
+{"timestamp": "2026-08-20T08:49:03.988939+00:00", "event_type": "non_data_question", "question": "hii"}
