@@ -616,3 +616,6 @@
 {"timestamp": "2026-08-17T06:02:33.494099+00:00", "event_type": "sql_generated", "question": "What are the top 5 minerals by average supply risk score?", "attempt": 1, "sql": "SELECT mineral\nFROM critical_minerals_supply_master\nGROUP BY mineral\nORDER BY AVG(supply_risk_score) DESC\nLIMIT 5"}
 {"timestamp": "2026-08-17T06:02:33.497587+00:00", "event_type": "execution_success", "question": "What are the top 5 minerals by average supply risk score?", "attempt": 1, "pipeline": "sql"}
 {"timestamp": "2026-08-20T08:49:03.988939+00:00", "event_type": "non_data_question", "question": "hii"}
+{"timestamp": "2026-08-20T09:00:43.180184+00:00", "event_type": "question_received", "question": "Customer Signups Ranked by City", "pipeline": "sql"}
+{"timestamp": "2026-08-20T09:00:59.862171+00:00", "event_type": "sql_generated", "question": "Customer Signups Ranked by City", "attempt": 1, "sql": "SELECT \n    city,\n    customer_id,\n    signup_date,\n    RANK() OVER (PARTITION BY city ORDER BY signup_date ASC, customer_id ASC) as ranking\nFROM customers"}
+{"timestamp": "2026-08-20T09:01:00.017929+00:00", "event_type": "execution_success", "question": "Customer Signups Ranked by City", "attempt": 1, "pipeline": "sql"}

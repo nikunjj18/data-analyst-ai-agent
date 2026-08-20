@@ -26,7 +26,7 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: 'Inter', sans-serif;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; }
@@ -134,7 +134,7 @@ button:focus-visible, input:focus-visible, a:focus-visible {
   border-radius: 8px;
   color: var(--text-dim);
   text-decoration: none;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   transition: all 0.15s;
   position: relative;
@@ -175,7 +175,7 @@ button:focus-visible, input:focus-visible, a:focus-visible {
 
 .sidebar-footer {
   padding: 10px 8px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-faint);
   border-top: 1px solid var(--border);
   margin-top: 10px;
@@ -205,7 +205,7 @@ button:focus-visible, input:focus-visible, a:focus-visible {
 }
 
 .topbar-sub {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-dim);
   margin-top: 2px;
 }
@@ -227,7 +227,7 @@ button:focus-visible, input:focus-visible, a:focus-visible {
 }
 
 .card-title {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -245,7 +245,7 @@ button:focus-visible, input:focus-visible, a:focus-visible {
   gap: 7px;
   padding: 10px 16px;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   transition: all 0.15s;
 }
@@ -292,7 +292,7 @@ button:focus-visible, input:focus-visible, a:focus-visible {
 
 .hero-empty p {
   color: var(--text-dim);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.6;
   margin-bottom: 24px;
 }
@@ -305,7 +305,7 @@ button:focus-visible, input:focus-visible, a:focus-visible {
   transition: border-color 0.15s;
 }
 .upload-drop:hover { border-color: var(--accent); }
-.upload-drop p { color: var(--text-dim); font-size: 13px; margin-top: 8px; }
+.upload-drop p { color: var(--text-dim); font-size: 14px; margin-top: 8px; }
 
 @media (max-width: 768px) {
   .shell { flex-direction: column; }
@@ -343,7 +343,7 @@ button:focus-visible, input:focus-visible, a:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -367,7 +367,7 @@ button:focus-visible, input:focus-visible, a:focus-visible {
 }
 
 .landing-hero p {
-  font-size: 14.5px;
+  font-size: 15px;
   color: var(--text-dim);
   max-width: 480px;
   margin: 0 auto 30px;
@@ -403,13 +403,13 @@ button:focus-visible, input:focus-visible, a:focus-visible {
 }
 
 .feature-card h4 {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   margin-bottom: 5px;
 }
 
 .feature-card p {
-  font-size: 11.5px;
+  font-size: 12.5px;
   color: var(--text-dim);
   line-height: 1.5;
 }
@@ -443,14 +443,14 @@ button:focus-visible, input:focus-visible, a:focus-visible {
 }
 
 .upload-drop-large p {
-  font-size: 13.5px;
+  font-size: 14px;
   color: var(--text);
   font-weight: 500;
   margin-bottom: 4px;
 }
 
 .upload-drop-large span {
-  font-size: 11.5px;
+  font-size: 12.5px;
   color: var(--text-faint);
 }
 
@@ -462,7 +462,7 @@ button:focus-visible, input:focus-visible, a:focus-visible {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text-dim);
   background: var(--accent-dim);
   border: 1px solid var(--accent);
@@ -487,7 +487,7 @@ button:focus-visible, input:focus-visible, a:focus-visible {
   border-left: 3px solid var(--warn);
   border-radius: 8px;
   padding: 12px 14px;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.5;
 }
 
@@ -503,7 +503,7 @@ button:focus-visible, input:focus-visible, a:focus-visible {
 }
 
 .kpi-label {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -526,7 +526,7 @@ button:focus-visible, input:focus-visible, a:focus-visible {
   display: grid;
   gap: 3px;
   overflow-x: auto;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .corr-header {
@@ -535,7 +535,7 @@ button:focus-visible, input:focus-visible, a:focus-visible {
   justify-content: center;
   padding: 6px 4px;
   color: var(--text-dim);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .corr-cell {
@@ -545,7 +545,7 @@ button:focus-visible, input:focus-visible, a:focus-visible {
   padding: 8px 4px;
   border-radius: 4px;
   color: var(--text);
-  font-size: 10.5px;
+  font-size: 11px;
 }
 
 @media (max-width: 800px) {
@@ -561,7 +561,7 @@ button:focus-visible, input:focus-visible, a:focus-visible {
 .dash-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12.5px;
+  font-size: 13.5px;
 }
 
 .dash-table td {
@@ -576,7 +576,7 @@ button:focus-visible, input:focus-visible, a:focus-visible {
 .preview-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 11.5px;
+  font-size: 12.5px;
   white-space: nowrap;
 }
 
@@ -601,7 +601,7 @@ button:focus-visible, input:focus-visible, a:focus-visible {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
+  font-size: 12px;
   margin-top: 6px;
   font-weight: 600;
 }
@@ -717,7 +717,7 @@ button:focus-visible, input:focus-visible, a:focus-visible {
 }
 
 .made-by {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-faint);
 }
 
@@ -725,7 +725,7 @@ button:focus-visible, input:focus-visible, a:focus-visible {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 13px;
   padding: 5px 12px;
   border-radius: 20px;
   background: var(--panel-alt);
@@ -756,7 +756,7 @@ button:focus-visible, input:focus-visible, a:focus-visible {
   padding: 13px 10px;
   color: var(--text-dim);
   text-decoration: none;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   border-bottom: 2px solid transparent;
   transition: all 0.15s;
