@@ -1,0 +1,40 @@
+How many orders are there?
+How many unique customers have placed orders?
+How many products are in the product catalog?
+How many product categories are there?
+What are the different shipment statuses?
+How many orders were placed in each shipment status?
+What is the total quantity of products sold?
+What is the total sales value of all order items, calculated as quantity multiplied by price?
+What is the average order-item price?
+What are the 10 most expensive order items?
+What is the total sales value for each product category?
+What are the top 10 products by sales value?
+What are the top 10 products by quantity sold?
+What is the total payment amount?
+What is the average payment amount?
+What is the total sales value for each store?
+Which stores have the highest number of orders?
+How many customers are from each city?
+What is the total refund amount?
+How many order items have been returned?
+What is the average number of items per order?
+What is the average order value based on item sales?
+What are the top 10 customers by total spending?
+What is the total sales value for each customer city?
+What is the monthly sales trend?
+What is the monthly number of orders?
+Which categories have sales above the average category sales?
+What percentage of order items have been returned?
+What percentage of orders have at least one returned item?
+Which suppliers generated the highest sales value?
+What is the average salary of employees at each store?
+Which stores have both more than 3 employees and an above-average employee salary?
+What is the total sales value and total refund amount for each product category?
+Which products have a return rate higher than the overall return rate?
+What is the month-over-month percentage change in sales?
+For each store, what are the top 3 products by sales value, including ties?
+Which customers have placed more than 5 orders?
+What percentage of total sales comes from each product category?
+Which stores have above-average sales but below-average return rates?
+For each city, what are the top 3 stores by sales, including ties?

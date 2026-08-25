@@ -71,7 +71,7 @@ Requirements:
 Return ONLY executable Python code. No explanations, no markdown fences.
 """
     response = call_with_retry(lambda: client.models.generate_content(
-        model="gemini-flash-lite-latest",
+        model=config.GEMINI_MODEL,
         contents=prompt
     ))
     code = response.text.strip().replace("```python", "").replace("```", "").strip()

@@ -4,6 +4,7 @@ from app.api_utils import call_with_retry
 from app.sql_executor import SQLExecutionError, safe_execute_sql_with_timeout
 from app.logger import log_event, log_error
 from langsmith import traceable
+from app.api_utils import log_token_usage_to_trace
 
 client = genai.Client(api_key=config.GEMINI_API_KEY)
 
@@ -44,9 +45,10 @@ def generate_sql_with_retry(question: str, relevant_tables: list[dict], db_path:
 
     for attempt in range(1, max_attempts + 1):
         response = call_with_retry(lambda: client.models.generate_content(
-            model="gemini-flash-lite-latest",
+           model=config.GEMINI_MODEL,
             contents=prompt
         ))
+        log_token_usage_to_trace(response)
         sql = response.text.strip().replace("```sql", "").replace("```", "").strip()
         log_event("sql_generated", question=question, attempt=attempt, sql=sql)
 

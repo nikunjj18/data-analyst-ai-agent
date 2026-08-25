@@ -5,6 +5,7 @@ from app.api_utils import call_with_retry
 from app.executor import safe_execute_with_timeout
 from app.logger import log_event, log_error
 from langsmith import traceable
+from app.api_utils import log_token_usage_to_trace
 
 client = genai.Client(api_key=config.GEMINI_API_KEY)
 
@@ -62,7 +63,7 @@ Rules:
 def generate_code(question: str, df: pd.DataFrame, quality_report=None, memory=None) -> str:
     prompt = build_prompt(question, df, quality_report, memory)
     response = call_with_retry(lambda: client.models.generate_content(
-        model="gemini-flash-lite-latest",
+        model=config.GEMINI_MODEL,
         contents=prompt
     ))
     code = response.text.strip()
@@ -80,9 +81,10 @@ def generate_code_with_retry(question: str, df: pd.DataFrame, quality_report=Non
 
     for attempt in range(1, max_attempts + 1):
         response = call_with_retry(lambda: client.models.generate_content(
-            model="gemini-flash-lite-latest",
+            model=config.GEMINI_MODEL,
             contents=prompt
         ))
+        log_token_usage_to_trace(response)
         code = response.text.strip().replace("```python", "").replace("```", "").strip()
         log_event("code_generated", question=question, attempt=attempt, code=code)
 
@@ -152,7 +154,7 @@ If the question mentions or relates to any of the columns listed above, even bri
 Answer with only one word: YES or NO.
 """
     response = call_with_retry(lambda: client.models.generate_content(
-        model="gemini-flash-lite-latest",
+        model=config.GEMINI_MODEL,
         contents=prompt
     ))
     answer = response.text.strip().upper()
@@ -169,7 +171,7 @@ you're here to help analyze their data. If it's something you genuinely can't kn
 date, or general knowledge), say so honestly and redirect them toward asking about their dataset.
 """
     response = call_with_retry(lambda: client.models.generate_content(
-        model="gemini-flash-lite-latest",
+        model=config.GEMINI_MODEL,
         contents=prompt
     ))
     return response.text.strip()
@@ -189,7 +191,7 @@ concentration, or factor in the data explains it. Be specific and analytical, no
 Do not repeat the question or the number itself, just explain the "why."
 """
     response = call_with_retry(lambda: client.models.generate_content(
-        model="gemini-flash-lite-latest",
+        model=config.GEMINI_MODEL,
         contents=prompt
     ))
     return response.text.strip()
@@ -216,7 +218,7 @@ patterns or concentrations worth investigating further, and data quality caveats
 know about. Write in flowing prose, no bullet points, professional and specific, not generic.
 """
     response = call_with_retry(lambda: client.models.generate_content(
-        model="gemini-flash-lite-latest",
+        model=config.GEMINI_MODEL,
         contents=prompt
     ))
     return response.text.strip()
@@ -237,7 +239,7 @@ Be specific with column names and plausible patterns, not generic statements.
 Return ONLY a JSON array of 3 strings, nothing else.
 """
     response = call_with_retry(lambda: client.models.generate_content(
-        model="gemini-flash-lite-latest",
+        model=config.GEMINI_MODEL,
         contents=prompt
     ))
     text = response.text.strip().replace("```json", "").replace("```", "").strip()
