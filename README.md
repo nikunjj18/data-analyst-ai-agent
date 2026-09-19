@@ -8,8 +8,6 @@ An AI agent that turns a spreadsheet (or a set of related tables) into a convers
 
 ## Screenshots
 
-## Screenshots
-
 **Upload & Clean**
 ![Upload & Clean](./data/images/WhatsApp%20Image%202026-09-19%20at%203.38.45%20PM.jpeg)
 
