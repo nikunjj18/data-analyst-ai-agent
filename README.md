@@ -9,18 +9,18 @@ An AI agent that turns a spreadsheet (or a set of related tables) into a convers
 ## Screenshots
 
 **Upload & Clean**
-`[c:\Users\mahes\AppData\Local\Packages\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\LocalState\sessions\71E063B75B7EFE83FDA991E3D3E6E0C2595BE258\transfers\2026-38\WhatsApp Image 2026-09-19 at 3.38.45 PM.jpeg]`
+![](data/images/data-analyst-ai-agent\data\images\WhatsApp Image 2026-09-19 at 3.38.45 PM.jpeg)
 
-`[c:\Users\mahes\AppData\Local\Packages\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\LocalState\sessions\71E063B75B7EFE83FDA991E3D3E6E0C2595BE258\transfers\2026-38\WhatsApp Image 2026-09-19 at 3.40.00 PM.jpeg]`
+![](data-analyst-ai-agent\data\images\WhatsApp Image 2026-09-19 at 3.40.00 PM.jpeg)
 
 **Dashboard**
-`[c:\Users\mahes\AppData\Local\Packages\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\LocalState\sessions\71E063B75B7EFE83FDA991E3D3E6E0C2595BE258\transfers\2026-38\WhatsApp Image 2026-09-19 at 3.40.25 PM.jpeg]`
+![](data-analyst-ai-agent\data\images\WhatsApp Image 2026-09-19 at 3.40.25 PM.jpeg)
 
 **Ask Your Data**
-`[c:\Users\mahes\AppData\Local\Packages\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\LocalState\sessions\71E063B75B7EFE83FDA991E3D3E6E0C2595BE258\transfers\2026-38\WhatsApp Image 2026-09-19 at 3.40.57 PM.jpeg]`
+![](data-analyst-ai-agent\data\images\WhatsApp Image 2026-09-19 at 3.40.57 PM.jpeg)
 
 **Export Report**
-`[c:\Users\mahes\AppData\Local\Packages\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\LocalState\sessions\71E063B75B7EFE83FDA991E3D3E6E0C2595BE258\transfers\2026-38\WhatsApp Image 2026-09-19 at 3.43.07 PM.jpeg]`
+![](data-analyst-ai-agent\data\images\WhatsApp Image 2026-09-19 at 3.43.07 PM.jpeg)
 
 ---
 
