@@ -8,20 +8,21 @@ An AI agent that turns a spreadsheet (or a set of related tables) into a convers
 
 ## Screenshots
 
-**Upload & Clean**
-![](data/images/data-analyst-ai-agent\data\images\WhatsApp Image 2026-09-19 at 3.38.45 PM.jpeg)
+## Screenshots
 
-![](data-analyst-ai-agent\data\images\WhatsApp Image 2026-09-19 at 3.40.00 PM.jpeg)
+**Upload & Clean**
+![Upload & Clean](./data/images/WhatsApp%20Image%202026-09-19%20at%203.38.45%20PM.jpeg)
+
+![Upload Step](./data/images/WhatsApp%20Image%202026-09-19%20at%203.40.00%20PM.jpeg)
 
 **Dashboard**
-![](data-analyst-ai-agent\data\images\WhatsApp Image 2026-09-19 at 3.40.25 PM.jpeg)
+![Dashboard](./data/images/WhatsApp%20Image%202026-09-19%20at%203.40.25%20PM.jpeg)
 
 **Ask Your Data**
-![](data-analyst-ai-agent\data\images\WhatsApp Image 2026-09-19 at 3.40.57 PM.jpeg)
+![Ask Your Data](./data/images/WhatsApp%20Image%202026-09-19%20at%203.40.57%20PM.jpeg)
 
 **Export Report**
-![](data-analyst-ai-agent\data\images\WhatsApp Image 2026-09-19 at 3.43.07 PM.jpeg)
-
+![Export Report](./data/images/WhatsApp%20Image%202026-09-19%20at%203.43.07%20PM.jpeg)
 ---
 
 ## What it does
